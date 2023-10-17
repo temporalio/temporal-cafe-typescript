@@ -1,4 +1,4 @@
-import { defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
+import { ApplicationFailure, condition, defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
 import type * as activities from '../activities';
 
 const { AddLoyaltyPoints, ProcessPayment, ProcessPaymentRefund } = proxyActivities<
@@ -26,20 +26,14 @@ export interface OrderStartedSignal { }
 
 export const OrderStartedSignal = defineSignal<[OrderStartedSignal]>('order-started')
 
-export const OrderStartToCompleteDeadline = 15 * 60 * 1000;
+export const OrderFulfilmentWindow = 2 * 60 * 1000;
 
 async function addLoyaltyPoints(input: OrderWorkflowInput): Promise<any> {
   const itemCount = input.Items.reduce((r, i) => r + i.Count, 0)
   await AddLoyaltyPoints({ Email: input.Email, Points: itemCount })
 }
 
-async function fulfilSubOrders(input: OrderWorkflowInput): Promise<any> {
-  setHandler(OrderStartedSignal, () => {
-    sleep(OrderStartToCompleteDeadline).then(() => {
-      throw new Error(`order not completed within deadline`)
-    })
-  })
-
+function createSubOrders(input: OrderWorkflowInput): Array<Promise<any>> {
   const itemsByType = new Map()
   for (const i of input.Items) {
     if (!itemsByType.has(i.Type)) {
@@ -65,27 +59,40 @@ async function fulfilSubOrders(input: OrderWorkflowInput): Promise<any> {
         subOrder,
         {
           args: [{ Items: items }],
-          parentClosePolicy: ParentClosePolicy.PARENT_CLOSE_POLICY_TERMINATE,
+          parentClosePolicy: ParentClosePolicy.PARENT_CLOSE_POLICY_REQUEST_CANCEL,
         }
       )
     )
   })
 
-  await Promise.all(subOrders)
+  return subOrders
 }
 
 export async function Order(input: OrderWorkflowInput): Promise<OrderWorkflowResult> {
   const payment = await ProcessPayment({ Token: input.PaymentToken })
 
+  let fulfilmentWindowExpired = false
+
+  setHandler(OrderStartedSignal, () => {
+    sleep(OrderFulfilmentWindow).
+      then(() => { fulfilmentWindowExpired = true }, () => { /* ignore */ })
+  })
+
   try {
-    await fulfilSubOrders(input)
+    const subOrders = createSubOrders(input)
+    await Promise.race([
+      Promise.all(subOrders),
+      condition(() => fulfilmentWindowExpired).then(
+        () => { throw new ApplicationFailure('Failed to complete order within fulfilment window') }
+      ),
+    ])
   } catch (e) {
     await ProcessPaymentRefund(payment)
     throw e
   }
 
   if (input.Email) {
-    try { await addLoyaltyPoints(input) } catch { }
+    try { await addLoyaltyPoints(input) } catch { /* ignore */ }
   }
 
   return {};
