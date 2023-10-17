@@ -1,4 +1,5 @@
 import { NativeConnection, Worker } from '@temporalio/worker';
+import { Client, Connection } from '@temporalio/client';
 import * as activities from './activities';
 
 async function run() {
@@ -10,14 +11,17 @@ async function run() {
     address: 'localhost:7233',
     // TLS and gRPC metadata configuration goes here.
   });
+  const client = new Client({
+    connection: await Connection.connect({ address: 'localhost:7233'})
+  });
   // Step 2: Register Workflows and Activities with the Worker.
   const worker = await Worker.create({
     connection,
     namespace: 'default',
-    taskQueue: 'hello-world',
+    taskQueue: 'cafe',
     // Workflows are registered using a path as they run in a separate JS context.
     workflowsPath: require.resolve('./workflows'),
-    activities,
+    activities: activities.createActivities(client),
   });
 
   // Step 3: Start accepting tasks on the `hello-world` queue
