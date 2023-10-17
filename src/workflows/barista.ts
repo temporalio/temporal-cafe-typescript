@@ -56,33 +56,33 @@ function newWorkflowState(input: BaristaOrderWorkflowInput): BaristaOrderWorkflo
   }
 }
 
-function notifyStart() {
+async function notifyStart() {
   const pid = workflowInfo().parent?.workflowId
   if (!pid) { return }
 
   const handle = getExternalWorkflowHandle(pid)
-  handle.signal("order-started")
+  await handle.signal("order-started")
 }
 
 export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<BaristaOrderWorkflowResult> {
   let wf = newWorkflowState(input)
-  let notifiedStart = false;
+  let started = false;
 
   setHandler(BaristaGetStatusQuery, () => {
     return wf;
   })
 
-  setHandler(BaristaItemStartedSignal, ({ Line }: BaristaOrderItemStartedSignal) => {
+  setHandler(BaristaItemStartedSignal, async ({ Line }: BaristaOrderItemStartedSignal) => {
     wf.Items[Line - 1].Status = "started";
-    if (!notifiedStart) { notifyStart(); notifiedStart = true }
+    started = true
   })
 
-  setHandler(BaristaItemCompletedSignal, ({ Line }: BaristaOrderItemCompletedSignal) => {
+  setHandler(BaristaItemCompletedSignal, async ({ Line }: BaristaOrderItemCompletedSignal) => {
     wf.Items[Line - 1].Status = "completed"
     if (wf.Items.find((item) => item.Status != "completed") == undefined) {
       wf.Open = false
     }
-    if (!notifiedStart) { notifyStart(); notifiedStart = true }
+    started = true
   })
 
   setHandler(BaristaItemFailedSignal, ({ Line }: BaristaOrderItemFailedSignal) => {
@@ -91,6 +91,8 @@ export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<Ba
     throw new Error(`item ${wf.Items[Line - 1].Name} failed`)
   })
 
+  await condition(() => started)
+  await notifyStart()
   await condition(() => !wf.Open)
 
   return {};
