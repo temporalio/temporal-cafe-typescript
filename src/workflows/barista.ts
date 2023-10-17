@@ -46,12 +46,22 @@ export interface BaristaOrderWorkflowResult {
 }
 
 function newWorkflowState(input: BaristaOrderWorkflowInput): BaristaOrderWorkflowStatus {
-  let items = input.Items.flatMap<BaristaOrderLineItem>((item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" }))
+  let items = input.Items.flatMap<BaristaOrderLineItem>(
+    (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
+  )
 
   return {
     Open: true,
     Items: items,
   }
+}
+
+function notifyStart() {
+  const pid = workflowInfo().parent?.workflowId
+  if (!pid) { return }
+
+  const handle = getExternalWorkflowHandle(pid)
+  handle.signal("order-started")
 }
 
 export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<BaristaOrderWorkflowResult> {
@@ -64,14 +74,7 @@ export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<Ba
 
   setHandler(BaristaItemStartedSignal, ({ Line }: BaristaOrderItemStartedSignal) => {
     wf.Items[Line - 1].Status = "started";
-    if (notifiedStart) { return }
-
-    const pid = workflowInfo().parent?.workflowId
-    if (!pid) { return }
-
-    const handle = getExternalWorkflowHandle(pid)
-    handle.signal("order-started")
-    notifiedStart = true
+    if (!notifiedStart) { notifyStart(); notifiedStart = true }
   })
 
   setHandler(BaristaItemCompletedSignal, ({ Line }: BaristaOrderItemCompletedSignal) => {
@@ -79,6 +82,7 @@ export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<Ba
     if (wf.Items.find((item) => item.Status != "completed") == undefined) {
       wf.Open = false
     }
+    if (!notifiedStart) { notifyStart(); notifiedStart = true }
   })
 
   setHandler(BaristaItemFailedSignal, ({ Line }: BaristaOrderItemFailedSignal) => {

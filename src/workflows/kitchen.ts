@@ -46,12 +46,22 @@ export interface KitchenOrderWorkflowResult {
 }
 
 function newWorkflowState(input: KitchenOrderWorkflowInput): KitchenOrderWorkflowStatus {
-  let items = input.Items.flatMap<KitchenOrderLineItem>((item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" }))
+  let items = input.Items.flatMap<KitchenOrderLineItem>(
+    (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
+  )
 
   return {
     Open: true,
     Items: items,
   }
+}
+
+function notifyStart() {
+  const pid = workflowInfo().parent?.workflowId
+  if (!pid) { return }
+
+  const handle = getExternalWorkflowHandle(pid)
+  handle.signal("order-started")
 }
 
 export async function KitchenOrder(input: KitchenOrderWorkflowInput): Promise<KitchenOrderWorkflowResult> {
@@ -64,14 +74,7 @@ export async function KitchenOrder(input: KitchenOrderWorkflowInput): Promise<Ki
 
   setHandler(KitchenItemStartedSignal, ({ Line }: KitchenOrderItemStartedSignal) => {
     wf.Items[Line - 1].Status = "started";
-    if (notifiedStart) { return }
-
-    const pid = workflowInfo().parent?.workflowId
-    if (!pid) { return }
-
-    const handle = getExternalWorkflowHandle(pid)
-    handle.signal("order-started")
-    notifiedStart = true
+    if (!notifiedStart) { notifyStart(); notifiedStart = true }
   })
 
   setHandler(KitchenItemCompletedSignal, ({ Line }: KitchenOrderItemCompletedSignal) => {
@@ -79,6 +82,7 @@ export async function KitchenOrder(input: KitchenOrderWorkflowInput): Promise<Ki
     if (wf.Items.find((item) => item.Status != "completed") == undefined) {
       wf.Open = false
     }
+    if (!notifiedStart) { notifyStart(); notifiedStart = true }
   })
 
   setHandler(KitchenItemFailedSignal, ({ Line }: KitchenOrderItemFailedSignal) => {
