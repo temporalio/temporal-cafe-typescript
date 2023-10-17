@@ -46,7 +46,7 @@ export interface BaristaOrderWorkflowResult {
 }
 
 function newWorkflowState(input: BaristaOrderWorkflowInput): BaristaOrderWorkflowStatus {
-  let items = input.Items.flatMap<BaristaOrderLineItem>(
+  const items = input.Items.flatMap<BaristaOrderLineItem>(
     (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
   )
 
@@ -65,7 +65,7 @@ async function notifyStart() {
 }
 
 export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<BaristaOrderWorkflowResult> {
-  let wf = newWorkflowState(input)
+  const wf = newWorkflowState(input)
   let started = false;
 
   setHandler(BaristaGetStatusQuery, () => {

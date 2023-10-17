@@ -29,7 +29,7 @@ export const OrderStartedSignal = defineSignal<[OrderStartedSignal]>('order-star
 export const OrderStartToCompleteDeadline = 15 * 60 * 1000;
 
 async function addLoyaltyPoints(input: OrderWorkflowInput): Promise<any> {
-  let itemCount = input.Items.reduce((r, i) => r + i.Count, 0)
+  const itemCount = input.Items.reduce((r, i) => r + i.Count, 0)
   await AddLoyaltyPoints({ Email: input.Email, Points: itemCount })
 }
 
@@ -40,7 +40,7 @@ async function fulfilSubOrders(input: OrderWorkflowInput): Promise<any> {
     })
   })
 
-  let itemsByType = new Map()
+  const itemsByType = new Map()
   for (const i of input.Items) {
     if (!itemsByType.has(i.Type)) {
       itemsByType.set(i.Type, [i])
@@ -49,7 +49,7 @@ async function fulfilSubOrders(input: OrderWorkflowInput): Promise<any> {
     }
   }
 
-  let subOrders: Array<Promise<any>> = []
+  const subOrders: Array<Promise<any>> = []
   itemsByType.forEach((items, t) => {
     let subOrder: string
     if (t == "food") {

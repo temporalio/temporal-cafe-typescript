@@ -37,10 +37,10 @@ export function createActivities(client: Client) {
         signalArgs: [{ Points: input.Points }],
       });
     },
-    async ProcessPayment(input: ProcessPaymentInput): Promise<ProcessPaymentResult> {
+    async ProcessPayment(_input: ProcessPaymentInput): Promise<ProcessPaymentResult> {
       return { Payment: { AuthCode: "x" } }
     },
-    async ProcessPaymentRefund(input: ProcessPaymentRefundInput): Promise<ProcessPaymentRefundResult> {
+    async ProcessPaymentRefund(_input: ProcessPaymentRefundInput): Promise<ProcessPaymentRefundResult> {
       return {}
     }
   };

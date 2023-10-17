@@ -46,7 +46,7 @@ export interface KitchenOrderWorkflowResult {
 }
 
 function newWorkflowState(input: KitchenOrderWorkflowInput): KitchenOrderWorkflowStatus {
-  let items = input.Items.flatMap<KitchenOrderLineItem>(
+  const items = input.Items.flatMap<KitchenOrderLineItem>(
     (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
   )
 
@@ -65,7 +65,7 @@ async function notifyStart() {
 }
 
 export async function KitchenOrder(input: KitchenOrderWorkflowInput): Promise<KitchenOrderWorkflowResult> {
-  let wf = newWorkflowState(input)
+  const wf = newWorkflowState(input)
   let started = false;
 
   setHandler(KitchenGetStatusQuery, () => {
