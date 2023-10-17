@@ -43,13 +43,14 @@ async function fulfilSubOrders(input: OrderWorkflowInput): Promise<any> {
   let itemsByType = new Map()
   for (const i of input.Items) {
     if (!itemsByType.has(i.Type)) {
-      itemsByType.set(i.Type, i)
+      itemsByType.set(i.Type, [i])
+    } else {
+      itemsByType.get(i.Type).push(i);
     }
-    itemsByType.get(i.Type).push(i);
   }
 
   let subOrders: Array<Promise<any>> = []
-  itemsByType.forEach((t, items) => {
+  itemsByType.forEach((items, t) => {
     let subOrder: string
     if (t == "food") {
       subOrder = "KitchenOrder"
