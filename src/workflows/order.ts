@@ -1,5 +1,7 @@
 import { ApplicationFailure, condition, defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
 import type * as activities from '../activities';
+import { temporalio } from '../api/root';
+import api = temporalio.cafe;
 
 const { AddLoyaltyPoints, ProcessPayment, ProcessPaymentRefund } = proxyActivities<
   ReturnType<(typeof activities)['createActivities']>
@@ -7,49 +9,36 @@ const { AddLoyaltyPoints, ProcessPayment, ProcessPaymentRefund } = proxyActiviti
   startToCloseTimeout: '5 minute',
 });
 
-export interface OrderLineItem {
-  Type: string;
-  Name: string;
-  Price: number;
-  Count: number;
-}
-
-export interface OrderWorkflowInput {
-  Email: string
-  PaymentToken: string
-  Items: Array<OrderLineItem>
-}
-
-export interface OrderWorkflowResult { }
-
-export interface OrderStartedSignal { }
-
-export const OrderStartedSignal = defineSignal<[OrderStartedSignal]>('order-started')
+export const OrderStartedSignal = defineSignal<[undefined]>('order-fulfilment-started')
 
 export const OrderFulfilmentWindow = 2 * 60 * 1000;
 
-async function addLoyaltyPoints(input: OrderWorkflowInput): Promise<any> {
-  const itemCount = input.Items.reduce((r, i) => r + i.Count, 0)
-  await AddLoyaltyPoints({ Email: input.Email, Points: itemCount })
+async function addLoyaltyPoints(input: api.OrderInput): Promise<any> {
+  const itemCount = input.items.reduce((r, i) => r + Number(i.count), 0)
+  await AddLoyaltyPoints(api.AddLoyaltyPointsInput.create({ email: input.email, points: itemCount }))
 }
 
-function createSubOrders(input: OrderWorkflowInput): Array<Promise<any>> {
+async function fulfilOrder(input: api.OrderInput) {
   const itemsByType = new Map()
-  for (const i of input.Items) {
-    if (!itemsByType.has(i.Type)) {
-      itemsByType.set(i.Type, [i])
+  for (const i of input.items) {
+    if (!itemsByType.has(i.type)) {
+      itemsByType.set(i.type, [i])
     } else {
-      itemsByType.get(i.Type).push(i);
+      itemsByType.get(i.type).push(i);
     }
   }
 
   const subOrders: Array<Promise<any>> = []
   itemsByType.forEach((items, t) => {
     let subOrder: string
-    if (t == "food") {
+    let input: api.KitchenOrderInput | api.BaristaOrderInput
+
+    if (t == api.ProductType.PRODUCT_TYPE_FOOD) {
       subOrder = "KitchenOrder"
-    } else if (t == "beverage") {
+      input = api.KitchenOrderInput.create({ items: items })
+    } else if (t == api.ProductType.PRODUCT_TYPE_BEVERAGE) {
       subOrder = "BaristaOrder"
+      input = api.BaristaOrderInput.create({ items: items })
     } else {
       throw new Error(`unknown item type ${t}`)
     }
@@ -58,42 +47,49 @@ function createSubOrders(input: OrderWorkflowInput): Array<Promise<any>> {
       executeChild(
         subOrder,
         {
-          args: [{ Items: items }],
+          args: [input],
           parentClosePolicy: ParentClosePolicy.PARENT_CLOSE_POLICY_REQUEST_CANCEL,
         }
       )
     )
   })
 
-  return subOrders
+  return Promise.all(subOrders)
 }
 
-export async function Order(input: OrderWorkflowInput): Promise<OrderWorkflowResult> {
-  const payment = await ProcessPayment({ Token: input.PaymentToken })
+async function fulfilmentTimer() {
+  return new Promise((_, reject) => {
+    let timerStarted = false
 
-  let fulfilmentWindowExpired = false
-
-  setHandler(OrderStartedSignal, () => {
-    sleep(OrderFulfilmentWindow).
-      then(() => { fulfilmentWindowExpired = true }, () => { /* ignore */ })
+    setHandler(OrderStartedSignal, () => {
+      if (timerStarted) {
+        return
+      }
+  
+      sleep(OrderFulfilmentWindow).
+        then(
+          () => { reject(new ApplicationFailure("order not fulfilled within window")) },
+          () => { /* ignore */ }
+        )
+  
+      timerStarted = true
+    })  
   })
+}
+
+export async function Order(input: api.OrderInput): Promise<api.OrderResult> {
+  const payment = await ProcessPayment(api.ProcessPaymentInput.create({ token: input.paymentToken }))
 
   try {
-    const subOrders = createSubOrders(input)
-    await Promise.race([
-      Promise.all(subOrders),
-      condition(() => fulfilmentWindowExpired).then(
-        () => { throw new ApplicationFailure('Failed to complete order within fulfilment window') }
-      ),
-    ])
+    await Promise.race([fulfilOrder(input), fulfilmentTimer()])
   } catch (e) {
     await ProcessPaymentRefund(payment)
     throw e
   }
 
-  if (input.Email) {
+  if (input.email) {
     try { await addLoyaltyPoints(input) } catch { /* ignore */ }
   }
 
-  return {};
+  return api.OrderResult.create();
 }

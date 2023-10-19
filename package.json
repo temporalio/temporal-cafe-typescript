@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc --build",
     "build.watch": "tsc --build --watch",
+    "build:protos": "pbjs -t json-module -w commonjs -r protobuf-sample -o src/api/json-module.js cafe.proto && pbjs -t static-module cafe.proto | pbts -o src/api/root.d.ts -",
     "lint": "eslint .",
     "start": "ts-node src/worker.ts",
     "start.watch": "nodemon src/worker.ts",
@@ -26,7 +27,9 @@
     "@temporalio/workflow": "^1.8.4",
     "@types/node-fetch": "^2.6.4",
     "nanoid": "3.x",
-    "node-fetch": "^2.6.2"
+    "node-fetch": "^2.6.2",
+    "protobufjs": "^7.2.5",
+    "protobufjs-cli": "^1.1.2"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.0",

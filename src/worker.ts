@@ -22,6 +22,7 @@ async function run() {
     // Workflows are registered using a path as they run in a separate JS context.
     workflowsPath: require.resolve('./workflows'),
     activities: activities.createActivities(client),
+    dataConverter: { payloadConverterPath: require.resolve('./payload-converter') },
   });
 
   // Step 3: Start accepting tasks on the `hello-world` queue

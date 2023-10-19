@@ -6,54 +6,21 @@ import {
   setHandler,
   workflowInfo
 } from '@temporalio/workflow';
-import { OrderLineItem } from './order';
+import { temporalio } from '../api/root';
+import api = temporalio.cafe;
 
-export const BaristaGetStatusQuery = defineQuery<BaristaOrderWorkflowStatus>('getStatus')
+export const BaristaOrderStatusQuery = defineQuery<api.BaristaOrderStatus>('status')
+export const BaristaOrderItemStatusSignal = defineSignal<[api.BaristaOrderItemStatusUpdate]>('barista-order-item-status')
 
-export const BaristaItemStartedSignal = defineSignal<[BaristaOrderItemStartedSignal]>('barista-item-started')
-export const BaristaItemCompletedSignal = defineSignal<[BaristaOrderItemCompletedSignal]>('barista-item-completed')
-export const BaristaItemFailedSignal = defineSignal<[BaristaOrderItemFailedSignal]>('barista-item-failed')
-
-type BaristaOrderItemStatus = "pending" | "started" | "completed" | "failed"
-
-export interface BaristaOrderLineItem {
-  Name: string;
-  Status: BaristaOrderItemStatus;
-}
-
-export interface BaristaOrderWorkflowInput {
-  Items: Array<OrderLineItem>;
-}
-
-export interface BaristaOrderItemStartedSignal {
-  Line: number;
-}
-
-export interface BaristaOrderItemCompletedSignal {
-  Line: number;
-}
-
-export interface BaristaOrderItemFailedSignal {
-  Line: number;
-}
-
-export interface BaristaOrderWorkflowStatus {
-  Open: boolean;
-  Items: Array<BaristaOrderLineItem>;
-}
-
-export interface BaristaOrderWorkflowResult {
-}
-
-function newWorkflowState(input: BaristaOrderWorkflowInput): BaristaOrderWorkflowStatus {
-  const items = input.Items.flatMap<BaristaOrderLineItem>(
-    (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
+function newWorkflowState(input: api.BaristaOrderInput): api.BaristaOrderStatus {
+  const items = input.items.flatMap<api.BaristaOrderLineItem>(
+    (item) => Array(Number(item.count)).fill(api.BaristaOrderLineItem.create({ name: item.name }))
   )
 
-  return {
-    Open: true,
-    Items: items,
-  }
+  return api.BaristaOrderStatus.create({
+    open: true,
+    items: items,
+  })
 }
 
 async function notifyStart() {
@@ -64,36 +31,36 @@ async function notifyStart() {
   await handle.signal("order-started")
 }
 
-export async function BaristaOrder(input: BaristaOrderWorkflowInput): Promise<BaristaOrderWorkflowResult> {
+export async function BaristaOrder(input: api.BaristaOrderInput): Promise<api.BaristaOrderResult> {
   const wf = newWorkflowState(input)
   let started = false;
 
-  setHandler(BaristaGetStatusQuery, () => {
+  setHandler(BaristaOrderStatusQuery, () => {
     return wf;
   })
 
-  setHandler(BaristaItemStartedSignal, async ({ Line }: BaristaOrderItemStartedSignal) => {
-    wf.Items[Line - 1].Status = "started";
-    started = true
-  })
-
-  setHandler(BaristaItemCompletedSignal, async ({ Line }: BaristaOrderItemCompletedSignal) => {
-    wf.Items[Line - 1].Status = "completed"
-    if (wf.Items.find((item) => item.Status != "completed") == undefined) {
-      wf.Open = false
+  setHandler(BaristaOrderItemStatusSignal, (update: api.BaristaOrderItemStatusUpdate) => {
+    if (update.line < 1 || update.line > wf.items.length) {
+      return
     }
-    started = true
-  })
 
-  setHandler(BaristaItemFailedSignal, ({ Line }: BaristaOrderItemFailedSignal) => {
-    wf.Items[Line - 1].Status = "failed"
-    wf.Open = false
-    throw new Error(`item ${wf.Items[Line - 1].Name} failed`)
+    wf.items[update.line-1].status = update.status;
+
+    if (update.status == api.BaristaOrderItemStatus.BARISTA_ORDER_ITEM_STATUS_STARTED) {
+      started = true
+    } else if (update.status == api.BaristaOrderItemStatus.BARISTA_ORDER_ITEM_STATUS_COMPLETED) {
+      started = true
+      if (wf.items.find((item) => item.status != api.BaristaOrderItemStatus.BARISTA_ORDER_ITEM_STATUS_COMPLETED) == undefined) {
+        wf.open = false
+      }
+    } else if (update.status == api.BaristaOrderItemStatus.BARISTA_ORDER_ITEM_STATUS_FAILED) {
+      wf.open = false
+    }
   })
 
   await condition(() => started)
   await notifyStart()
-  await condition(() => !wf.Open)
+  await condition(() => !wf.open)
 
-  return {};
+  return api.BaristaOrderResult.create();
 }

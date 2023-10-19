@@ -1,42 +1,32 @@
 import { condition, continueAsNew, defineQuery, defineSignal, setHandler, workflowInfo } from "@temporalio/workflow"
-
-export interface CustomerPointsBalanceQuery {
-  Points: number
-}
-
-export interface CustomerPointsAddSignal {
-  Points: number
-}
-
-export interface CustomerWorkflowInput {
-  Email: string
-}
-
-export interface CustomerWorkflowState {
-  Points: number
-}
+import { temporalio } from '../api/root';
+import api = temporalio.cafe;
 
 const CustomerStartingBalance = 100
-export const CustomerPointsBalanceQuery = defineQuery<CustomerPointsBalanceQuery>('customer-points-balance')
-export const CustomerPointsAddSignal = defineSignal<[CustomerPointsAddSignal]>('customer-points-add')
+export const CustomerPointsBalanceQuery = defineQuery<api.CustomerLoyaltyPointsBalance>('customer-loyalty-points-balance')
+export const CustomerPointsAddSignal = defineSignal<[api.CustomerLoyaltyPointsEarned]>('customer-loyalty-points-earned')
 
-export async function Customer(input: CustomerWorkflowInput, inputState: CustomerWorkflowState | undefined): Promise<void> {
-  let state: CustomerWorkflowState
+interface CustomerWorkflowState {
+  Points: number;
+}
+
+export async function Customer(input: api.CustomerInput, inputState: CustomerWorkflowState | undefined) {
+  let state: api.CustomerLoyaltyPointsBalance
 
   if (inputState) {
-    state = inputState
+    state = api.CustomerLoyaltyPointsBalance.create({ points: inputState.Points })
   } else {
-    state = { Points: CustomerStartingBalance }
+    state = api.CustomerLoyaltyPointsBalance.create({ points: CustomerStartingBalance })
   }
 
   setHandler(CustomerPointsBalanceQuery, () => {
     return state
   })
 
-  setHandler(CustomerPointsAddSignal, (input: CustomerPointsAddSignal) => {
-    state.Points += input.Points
+  setHandler(CustomerPointsAddSignal, (input: api.CustomerLoyaltyPointsEarned) => {
+    state.points += input.points
   })
 
   await condition(() => { return workflowInfo().continueAsNewSuggested })
-  await continueAsNew<typeof Customer>(input, state)
+  await continueAsNew<typeof Customer>(input, { Points: state.points })
 }

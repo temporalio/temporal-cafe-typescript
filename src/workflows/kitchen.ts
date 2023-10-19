@@ -6,54 +6,21 @@ import {
   setHandler,
   workflowInfo
 } from '@temporalio/workflow';
-import { OrderLineItem } from './order';
+import { temporalio } from '../api/root';
+import api = temporalio.cafe;
 
-export const KitchenGetStatusQuery = defineQuery<KitchenOrderWorkflowStatus>('getStatus')
+export const KitchenOrderStatusQuery = defineQuery<api.KitchenOrderStatus>('status')
+export const KitchenOrderItemStatusSignal = defineSignal<[api.KitchenOrderItemStatusUpdate]>('kitchen-order-item-status')
 
-export const KitchenItemStartedSignal = defineSignal<[KitchenOrderItemStartedSignal]>('kitchen-item-started')
-export const KitchenItemCompletedSignal = defineSignal<[KitchenOrderItemCompletedSignal]>('kitchen-item-completed')
-export const KitchenItemFailedSignal = defineSignal<[KitchenOrderItemFailedSignal]>('kitchen-item-failed')
-
-type KitchenOrderItemStatus = "pending" | "started" | "completed" | "failed"
-
-export interface KitchenOrderLineItem {
-  Name: string;
-  Status: KitchenOrderItemStatus;
-}
-
-export interface KitchenOrderWorkflowInput {
-  Items: Array<OrderLineItem>;
-}
-
-export interface KitchenOrderItemStartedSignal {
-  Line: number;
-}
-
-export interface KitchenOrderItemCompletedSignal {
-  Line: number;
-}
-
-export interface KitchenOrderItemFailedSignal {
-  Line: number;
-}
-
-export interface KitchenOrderWorkflowStatus {
-  Open: boolean;
-  Items: Array<KitchenOrderLineItem>;
-}
-
-export interface KitchenOrderWorkflowResult {
-}
-
-function newWorkflowState(input: KitchenOrderWorkflowInput): KitchenOrderWorkflowStatus {
-  const items = input.Items.flatMap<KitchenOrderLineItem>(
-    (item) => Array(item.Count).fill({ Name: item.Name, Status: "pending" })
+function newWorkflowState(input: api.KitchenOrderInput): api.KitchenOrderStatus {
+  const items = input.items.flatMap<api.KitchenOrderLineItem>(
+    (item) => Array(Number(item.count)).fill(api.KitchenOrderLineItem.create({ name: item.name }))
   )
 
-  return {
-    Open: true,
-    Items: items,
-  }
+  return api.KitchenOrderStatus.create({
+    open: true,
+    items: items,
+  })
 }
 
 async function notifyStart() {
@@ -64,36 +31,36 @@ async function notifyStart() {
   await handle.signal("order-started")
 }
 
-export async function KitchenOrder(input: KitchenOrderWorkflowInput): Promise<KitchenOrderWorkflowResult> {
+export async function KitchenOrder(input: api.KitchenOrderInput): Promise<api.KitchenOrderResult> {
   const wf = newWorkflowState(input)
   let started = false;
 
-  setHandler(KitchenGetStatusQuery, () => {
+  setHandler(KitchenOrderStatusQuery, () => {
     return wf;
   })
 
-  setHandler(KitchenItemStartedSignal, ({ Line }: KitchenOrderItemStartedSignal) => {
-    wf.Items[Line - 1].Status = "started"
-    started = true
-  })
-
-  setHandler(KitchenItemCompletedSignal, ({ Line }: KitchenOrderItemCompletedSignal) => {
-    wf.Items[Line - 1].Status = "completed"
-    if (wf.Items.find((item) => item.Status != "completed") == undefined) {
-      wf.Open = false
+  setHandler(KitchenOrderItemStatusSignal, (update: api.KitchenOrderItemStatusUpdate) => {
+    if (update.line < 1 || update.line > wf.items.length) {
+      return
     }
-    started = true
-  })
 
-  setHandler(KitchenItemFailedSignal, ({ Line }: KitchenOrderItemFailedSignal) => {
-    wf.Items[Line - 1].Status = "failed"
-    wf.Open = false
-    throw new Error(`item ${wf.Items[Line - 1].Name} failed`)
+    wf.items[update.line-1].status = update.status;
+
+    if (update.status == api.KitchenOrderItemStatus.KITCHEN_ORDER_ITEM_STATUS_STARTED) {
+      started = true
+    } else if (update.status == api.KitchenOrderItemStatus.KITCHEN_ORDER_ITEM_STATUS_COMPLETED) {
+      started = true
+      if (wf.items.find((item) => item.status != api.KitchenOrderItemStatus.KITCHEN_ORDER_ITEM_STATUS_COMPLETED) == undefined) {
+        wf.open = false
+      }
+    } else if (update.status == api.KitchenOrderItemStatus.KITCHEN_ORDER_ITEM_STATUS_FAILED) {
+      wf.open = false
+    }
   })
 
   await condition(() => started)
   await notifyStart()
-  await condition(() => !wf.Open)
+  await condition(() => !wf.open)
 
-  return {};
+  return api.KitchenOrderResult.create();
 }
