@@ -9,7 +9,7 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
     nested: {
       cafe: {
         options: {
-          go_package: "github.com/temporalio/temporal-cafe/api"
+          go_package: "github.com/temporalio/temporal-cafe/proto"
         },
         nested: {
           Cafe: {
@@ -63,6 +63,31 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
               PRODUCT_TYPE_BEVERAGE: 2
             }
           },
+          Menu: {
+            fields: {
+              items: {
+                rule: "repeated",
+                type: "MenuItem",
+                id: 1
+              }
+            }
+          },
+          MenuItem: {
+            fields: {
+              type: {
+                type: "ProductType",
+                id: 1
+              },
+              name: {
+                type: "string",
+                id: 2
+              },
+              price: {
+                type: "uint32",
+                id: 3
+              }
+            }
+          },
           OrderLineItem: {
             fields: {
               type: {
@@ -89,14 +114,18 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
                 type: "string",
                 id: 1
               },
-              paymentToken: {
+              name: {
                 type: "string",
                 id: 2
+              },
+              paymentToken: {
+                type: "string",
+                id: 3
               },
               items: {
                 rule: "repeated",
                 type: "OrderLineItem",
-                id: 3
+                id: 4
               }
             }
           },
@@ -125,10 +154,14 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
           },
           KitchenOrderInput: {
             fields: {
+              name: {
+                type: "string",
+                id: 1
+              },
               items: {
                 rule: "repeated",
                 type: "OrderLineItem",
-                id: 1
+                id: 2
               }
             }
           },
@@ -146,14 +179,18 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
           },
           KitchenOrderStatus: {
             fields: {
+              name: {
+                type: "string",
+                id: 1
+              },
               open: {
                 type: "bool",
-                id: 1
+                id: 2
               },
               items: {
                 rule: "repeated",
                 type: "KitchenOrderLineItem",
-                id: 2
+                id: 3
               }
             }
           },
@@ -182,10 +219,14 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
           },
           BaristaOrderInput: {
             fields: {
+              name: {
+                type: "string",
+                id: 1
+              },
               items: {
                 rule: "repeated",
                 type: "OrderLineItem",
-                id: 1
+                id: 2
               }
             }
           },
@@ -203,14 +244,18 @@ var $root = ($protobuf.roots["protobuf-sample"] || ($protobuf.roots["protobuf-sa
           },
           BaristaOrderStatus: {
             fields: {
+              name: {
+                type: "string",
+                id: 1
+              },
               open: {
                 type: "bool",
-                id: 1
+                id: 2
               },
               items: {
                 rule: "repeated",
                 type: "BaristaOrderLineItem",
-                id: 2
+                id: 3
               }
             }
           },

@@ -247,6 +247,212 @@ export namespace temporalio {
             PRODUCT_TYPE_BEVERAGE = 2
         }
 
+        /** Properties of a Menu. */
+        interface IMenu {
+
+            /** Menu items */
+            items?: (temporalio.cafe.IMenuItem[]|null);
+        }
+
+        /** Represents a Menu. */
+        class Menu implements IMenu {
+
+            /**
+             * Constructs a new Menu.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: temporalio.cafe.IMenu);
+
+            /** Menu items. */
+            public items: temporalio.cafe.IMenuItem[];
+
+            /**
+             * Creates a new Menu instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Menu instance
+             */
+            public static create(properties?: temporalio.cafe.IMenu): temporalio.cafe.Menu;
+
+            /**
+             * Encodes the specified Menu message. Does not implicitly {@link temporalio.cafe.Menu.verify|verify} messages.
+             * @param message Menu message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: temporalio.cafe.IMenu, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Menu message, length delimited. Does not implicitly {@link temporalio.cafe.Menu.verify|verify} messages.
+             * @param message Menu message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: temporalio.cafe.IMenu, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Menu message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns Menu
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): temporalio.cafe.Menu;
+
+            /**
+             * Decodes a Menu message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns Menu
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): temporalio.cafe.Menu;
+
+            /**
+             * Verifies a Menu message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Menu message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Menu
+             */
+            public static fromObject(object: { [k: string]: any }): temporalio.cafe.Menu;
+
+            /**
+             * Creates a plain object from a Menu message. Also converts values to other types if specified.
+             * @param message Menu
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: temporalio.cafe.Menu, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Menu to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for Menu
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
+        /** Properties of a MenuItem. */
+        interface IMenuItem {
+
+            /** MenuItem type */
+            type?: (temporalio.cafe.ProductType|null);
+
+            /** MenuItem name */
+            name?: (string|null);
+
+            /** MenuItem price */
+            price?: (number|null);
+        }
+
+        /** Represents a MenuItem. */
+        class MenuItem implements IMenuItem {
+
+            /**
+             * Constructs a new MenuItem.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: temporalio.cafe.IMenuItem);
+
+            /** MenuItem type. */
+            public type: temporalio.cafe.ProductType;
+
+            /** MenuItem name. */
+            public name: string;
+
+            /** MenuItem price. */
+            public price: number;
+
+            /**
+             * Creates a new MenuItem instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns MenuItem instance
+             */
+            public static create(properties?: temporalio.cafe.IMenuItem): temporalio.cafe.MenuItem;
+
+            /**
+             * Encodes the specified MenuItem message. Does not implicitly {@link temporalio.cafe.MenuItem.verify|verify} messages.
+             * @param message MenuItem message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encode(message: temporalio.cafe.IMenuItem, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified MenuItem message, length delimited. Does not implicitly {@link temporalio.cafe.MenuItem.verify|verify} messages.
+             * @param message MenuItem message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            public static encodeDelimited(message: temporalio.cafe.IMenuItem, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a MenuItem message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns MenuItem
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): temporalio.cafe.MenuItem;
+
+            /**
+             * Decodes a MenuItem message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns MenuItem
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            public static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): temporalio.cafe.MenuItem;
+
+            /**
+             * Verifies a MenuItem message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            public static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a MenuItem message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns MenuItem
+             */
+            public static fromObject(object: { [k: string]: any }): temporalio.cafe.MenuItem;
+
+            /**
+             * Creates a plain object from a MenuItem message. Also converts values to other types if specified.
+             * @param message MenuItem
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            public static toObject(message: temporalio.cafe.MenuItem, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this MenuItem to JSON.
+             * @returns JSON object
+             */
+            public toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the default type url for MenuItem
+             * @param [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+             * @returns The default type url
+             */
+            public static getTypeUrl(typeUrlPrefix?: string): string;
+        }
+
         /** Properties of an OrderLineItem. */
         interface IOrderLineItem {
 
@@ -368,6 +574,9 @@ export namespace temporalio {
             /** OrderInput email */
             email?: (string|null);
 
+            /** OrderInput name */
+            name?: (string|null);
+
             /** OrderInput paymentToken */
             paymentToken?: (string|null);
 
@@ -386,6 +595,9 @@ export namespace temporalio {
 
             /** OrderInput email. */
             public email: string;
+
+            /** OrderInput name. */
+            public name: string;
 
             /** OrderInput paymentToken. */
             public paymentToken: string;
@@ -676,6 +888,9 @@ export namespace temporalio {
         /** Properties of a KitchenOrderInput. */
         interface IKitchenOrderInput {
 
+            /** KitchenOrderInput name */
+            name?: (string|null);
+
             /** KitchenOrderInput items */
             items?: (temporalio.cafe.IOrderLineItem[]|null);
         }
@@ -688,6 +903,9 @@ export namespace temporalio {
              * @param [properties] Properties to set
              */
             constructor(properties?: temporalio.cafe.IKitchenOrderInput);
+
+            /** KitchenOrderInput name. */
+            public name: string;
 
             /** KitchenOrderInput items. */
             public items: temporalio.cafe.IOrderLineItem[];
@@ -876,6 +1094,9 @@ export namespace temporalio {
         /** Properties of a KitchenOrderStatus. */
         interface IKitchenOrderStatus {
 
+            /** KitchenOrderStatus name */
+            name?: (string|null);
+
             /** KitchenOrderStatus open */
             open?: (boolean|null);
 
@@ -891,6 +1112,9 @@ export namespace temporalio {
              * @param [properties] Properties to set
              */
             constructor(properties?: temporalio.cafe.IKitchenOrderStatus);
+
+            /** KitchenOrderStatus name. */
+            public name: string;
 
             /** KitchenOrderStatus open. */
             public open: boolean;
@@ -1181,6 +1405,9 @@ export namespace temporalio {
         /** Properties of a BaristaOrderInput. */
         interface IBaristaOrderInput {
 
+            /** BaristaOrderInput name */
+            name?: (string|null);
+
             /** BaristaOrderInput items */
             items?: (temporalio.cafe.IOrderLineItem[]|null);
         }
@@ -1193,6 +1420,9 @@ export namespace temporalio {
              * @param [properties] Properties to set
              */
             constructor(properties?: temporalio.cafe.IBaristaOrderInput);
+
+            /** BaristaOrderInput name. */
+            public name: string;
 
             /** BaristaOrderInput items. */
             public items: temporalio.cafe.IOrderLineItem[];
@@ -1381,6 +1611,9 @@ export namespace temporalio {
         /** Properties of a BaristaOrderStatus. */
         interface IBaristaOrderStatus {
 
+            /** BaristaOrderStatus name */
+            name?: (string|null);
+
             /** BaristaOrderStatus open */
             open?: (boolean|null);
 
@@ -1396,6 +1629,9 @@ export namespace temporalio {
              * @param [properties] Properties to set
              */
             constructor(properties?: temporalio.cafe.IBaristaOrderStatus);
+
+            /** BaristaOrderStatus name. */
+            public name: string;
 
             /** BaristaOrderStatus open. */
             public open: boolean;
