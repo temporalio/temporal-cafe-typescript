@@ -1,5 +1,7 @@
 import { Connection, Client } from '@temporalio/client';
-import { example } from './workflows';
+import { Order } from './workflows';
+import { temporalio } from './proto';
+import api = temporalio.cafe;
 import { nanoid } from 'nanoid';
 
 async function run() {
@@ -16,17 +18,28 @@ async function run() {
     // namespace: 'foo.bar', // connects to 'default' namespace if not specified
   });
 
-  const handle = await client.workflow.start(example, {
-    taskQueue: 'hello-world',
+  const handle = await client.workflow.start(Order, {
+    workflowId: nanoid(),
+    taskQueue: 'cafe',
     // type inference works! args: [name: string]
-    args: ['Temporal'],
-    // in practice, use a meaningful business ID, like customerId or transactionId
-    workflowId: 'workflow-' + nanoid(),
+    args: [
+      api.OrderInput.create({
+        email: 'me@example.com',
+        items: [
+          api.OrderLineItem.create({
+            type: api.ProductType.PRODUCT_TYPE_BEVERAGE,
+            name: "Coffee",
+            price: 350,
+            count: 2,
+          }),
+        ],
+      }),
+    ],
   });
   console.log(`Started workflow ${handle.workflowId}`);
 
   // optional: wait for client result
-  console.log(await handle.result()); // Hello, Temporal!
+  console.log(await handle.result());
 }
 
 run().catch((err) => {

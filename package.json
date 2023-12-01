@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc --build",
     "build.watch": "tsc --build --watch",
-    "build:protos": "pbjs -t json-module -w commonjs -r protobuf-sample -o src/api/json-module.js cafe.proto && pbjs -t static-module cafe.proto | pbts -o src/api/root.d.ts -",
+    "build:protos": "pbjs -t json-module -w commonjs -r protobuf-sample -o src/proto/json-module.js src/proto/cafe.proto && pbjs -t static-module src/proto/cafe.proto | pbts -o src/proto/index.d.ts -",
     "lint": "eslint .",
     "start": "ts-node src/worker.ts",
     "start.watch": "nodemon src/worker.ts",

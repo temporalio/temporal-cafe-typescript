@@ -1,6 +1,6 @@
 import { Client } from '@temporalio/client';
 import { Context } from '@temporalio/activity';
-import { temporalio } from './api/root';
+import { temporalio } from './proto/root';
 import api = temporalio.cafe;
 
 export function createActivities(client: Client) {

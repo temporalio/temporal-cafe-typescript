@@ -6,7 +6,7 @@ import {
   setHandler,
   workflowInfo
 } from '@temporalio/workflow';
-import { temporalio } from '../api/root';
+import { temporalio } from '../proto';
 import api = temporalio.cafe;
 
 export const BaristaOrderStatusQuery = defineQuery<api.BaristaOrderStatus>('status')

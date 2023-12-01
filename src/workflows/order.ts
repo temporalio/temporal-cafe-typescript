@@ -1,6 +1,6 @@
 import { ApplicationFailure, condition, defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
 import type * as activities from '../activities';
-import { temporalio } from '../api/root';
+import { temporalio } from '../proto';
 import api = temporalio.cafe;
 
 const { AddLoyaltyPoints, ProcessPayment, ProcessPaymentRefund } = proxyActivities<

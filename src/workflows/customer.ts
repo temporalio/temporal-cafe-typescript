@@ -1,5 +1,5 @@
 import { condition, continueAsNew, defineQuery, defineSignal, setHandler, workflowInfo } from "@temporalio/workflow"
-import { temporalio } from '../api/root';
+import { temporalio } from '../proto';
 import api = temporalio.cafe;
 
 const CustomerStartingBalance = 100
