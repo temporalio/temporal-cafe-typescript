@@ -1,6 +1,6 @@
 import { Client } from '@temporalio/client';
 import { Context } from '@temporalio/activity';
-import { temporalio } from './proto/root';
+import { temporalio } from './proto';
 import api = temporalio.cafe;
 
 export function createActivities(client: Client) {
@@ -14,7 +14,7 @@ export function createActivities(client: Client) {
         signalArgs: [api.CustomerLoyaltyPointsEarned.create({ points: input.points })],
       });
 
-      return temporalio.cafe.AddLoyaltyPointsResult.create();
+      return api.AddLoyaltyPointsResult.create();
     },
     async ProcessPayment(_input: api.ProcessPaymentInput): Promise<api.ProcessPaymentResult> {
       return api.ProcessPaymentResult.create({ payment: api.Payment.create({ authcode: "x" }) })

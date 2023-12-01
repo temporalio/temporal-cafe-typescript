@@ -1,4 +1,4 @@
-import { ApplicationFailure, condition, defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
+import { ApplicationFailure, defineSignal, executeChild, ParentClosePolicy, proxyActivities, setHandler, sleep } from "@temporalio/workflow";
 import type * as activities from '../activities';
 import { temporalio } from '../proto';
 import api = temporalio.cafe;
