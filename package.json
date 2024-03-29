@@ -26,7 +26,7 @@
     "@temporalio/worker": "^1.8.4",
     "@temporalio/workflow": "^1.8.4",
     "@types/node-fetch": "^2.6.4",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "nanoid": "3.x",
     "node-fetch": "^2.6.2",
     "protobufjs": "^7.2.5",
